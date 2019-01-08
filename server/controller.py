@@ -1102,6 +1102,26 @@ class Controller(ServerBase):
 
         return tx_data
 
+    async def transaction_get_verbose_full(self, tx_hash):
+        self.assert_tx_hash(tx_hash)
+        tx_data = await self.daemon_request('getrawtransaction', tx_hash, True)
+        tx_data["amount"] = 0
+        tx_data["vin_count"] = len(tx_data["vin"])
+        tx_data["vout_count"] = len(tx_data["vout"])
+
+        for index, vin in enumerate(tx_data["vin"]):
+            tx_data["vin"][index]["vin_index"] = index
+
+        for index, vout in enumerate(tx_data["vout"]):
+            tx_data["vout"][index]["vout_index"] = index
+
+        for tx in tx_data["vout"]:
+            tx_data["amount"] += tx["valueSat"]
+
+        tx_data["vin"] = await self.process_vin(tx_data["vin"])
+
+        return tx_data
+
     async def transaction_get_merkle(self, tx_hash, height):
         '''Return the markle tree to a confirmed transaction given its hash
         and height.

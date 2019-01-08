@@ -235,7 +235,7 @@ class DB(object):
             headers.append(headers_concat[offset:offset + hlen])
             offset += hlen
 
-        return [self.coin.header_hash(header) for header in headers]
+        return [self.coin.header_hash(header, height) for header in headers]
 
     def get_history(self, hashX, limit=1000):
         '''Generator that returns an unpruned, sorted list of (tx_hash,

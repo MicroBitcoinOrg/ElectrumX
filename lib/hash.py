@@ -30,6 +30,7 @@
 import hashlib
 import hmac
 import groestlcoin_hash
+import mirinae
 
 from lib.util import bytes_to_int, int_to_bytes, hex_to_bytes
 
@@ -45,8 +46,14 @@ def sha256(x):
     return _sha256(x).digest()
 
 
-def groestlHash(x):
+def groestl_hash(x):
+    '''Simple wrapper of groestl hash.'''
     return groestlcoin_hash.getHash(x, len(x))
+
+
+def mirinae_hash(x, height):
+    '''Simple wrapper of mirinae hash.'''
+    return mirinae.get_hash(x, len(x), height)
 
 
 def ripemd160(x):

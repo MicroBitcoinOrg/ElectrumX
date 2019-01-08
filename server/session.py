@@ -474,6 +474,7 @@ class ElectrumX(SessionBase):
             'blockchain.transaction.get': controller.transaction_get,
             'blockchain.transaction.raw': controller.transaction_get_raw,
             'blockchain.transaction.verbose': controller.transaction_get_verbose,
+            'blockchain.transaction.vin': controller.transaction_get_verbose_full,
             'blockchain.transaction.get_merkle': controller.transaction_get_merkle,
             'server.add_peer': self.add_peer,
             'server.banner': self.banner,

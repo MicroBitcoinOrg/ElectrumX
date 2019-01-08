@@ -40,7 +40,7 @@ import base64
 import math
 
 import lib.util as util
-from lib.hash import Base58, hash160, double_sha256, hash_to_str, groestlHash, HASHX_LEN
+from lib.hash import Base58, hash160, double_sha256, hash_to_str, groestl_hash, mirinae_hash, HASHX_LEN
 from lib.script import ScriptPubKey, OpCodes
 import lib.tx as lib_tx
 from server.block_processor import BlockProcessor
@@ -310,8 +310,8 @@ class MicroBitcoin(Coin):
     SHORTNAME = "MBC"
     NET = "mainnet"
     VALUE_PER_COIN = 10000
-    FORK_TIMESTAMP = 1527625482
-    FORK_HEIGHT = 525000
+    MBC_HEIGHT = 525000
+    MIRINAE_HEIGHT = 999999999
     P2PKH_VERBYTE = bytes.fromhex("1A")
     P2SH_VERBYTES = [bytes.fromhex("33")]
     GENESIS_HASH = ("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f")
@@ -325,7 +325,7 @@ class MicroBitcoin(Coin):
     def electrum_header(cls, header, height):
         version, = struct.unpack('<I', header[:4])
         timestamp, bits, nonce = struct.unpack('<III', header[68:80])
-        block_hash = bytes(reversed(cls.header_hash(header))).hex()
+        block_hash = bytes(reversed(cls.header_hash(header, height))).hex()
 
         return {
             'block_height': height,
@@ -339,9 +339,10 @@ class MicroBitcoin(Coin):
         }
 
     @classmethod
-    def header_hash(cls, header):
-        timestamp = struct.unpack('<I', header[68:72])[0]
-        if timestamp > cls.FORK_TIMESTAMP:
-            return groestlHash(header)
+    def header_hash(cls, header, height=0):
+        if height > cls.MBC_HEIGHT and height < cls.MIRINAE_HEIGHT:
+            return groestl_hash(header)
+        elif height >= cls.MIRINAE_HEIGHT:
+            return mirinae_hash(header, height)
         else:
             return double_sha256(header)

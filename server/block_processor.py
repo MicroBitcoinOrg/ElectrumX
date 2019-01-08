@@ -240,7 +240,7 @@ class BlockProcessor(server.db.DB):
                   for n, raw_block in enumerate(raw_blocks)]
         headers = [block.header for block in blocks]
         hprevs = [self.coin.header_prevhash(h) for h in headers]
-        chain = [self.tip] + [self.coin.header_hash(h) for h in headers[:-1]]
+        chain = [self.tip] + [self.coin.header_hash(h, first + n) for n, h in enumerate(headers[:-1])]
 
         if hprevs == chain:
             start = time.time()
@@ -501,7 +501,7 @@ class BlockProcessor(server.db.DB):
         headers = [block.header for block in blocks]
         self.height = height
         self.headers.extend(headers)
-        self.tip = self.coin.header_hash(headers[-1])
+        self.tip = self.coin.header_hash(headers[-1], self.height)
 
         # If caught up, flush everything as client queries are
         # performed on the DB.
@@ -572,7 +572,7 @@ class BlockProcessor(server.db.DB):
         for raw_block in raw_blocks:
             # Check and update self.tip
             block = coin.block(raw_block, self.height)
-            header_hash = coin.header_hash(block.header)
+            header_hash = coin.header_hash(block.header, self.height)
             if header_hash != self.tip:
                 raise ChainError('backup block {} not tip {} at height {:,d}'
                                  .format(hash_to_str(header_hash),
