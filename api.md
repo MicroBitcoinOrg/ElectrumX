@@ -331,6 +331,9 @@ This method return info about transaction.
 
 Params:
 `tx_hash`: hash of transaction
+`vin_page`: inputs page, by default set to **0**
+`vin_offset`: inputs pagination offset, by default set to **20**, max value **100**
+`enable_vin_details`: disable details about input spending output, by default set to **1**
 
 Request: https://api.mbc.wiki/?method=blockchain.transaction.verbose&params[]=2a1c421c91e26f0b7c241f52ecc8f8b781dcc4b40fc1025e257963745b18a0fc
 
@@ -410,3 +413,8 @@ Response:
 `supply`: circulating supply
 `halvings_count`: number of halvings
 `reward`: reward per block
+
+# Conclusion
+You can use this thread if you have any questions or ideas how to improve this API :)
+
+P.s. You can set up your own MicroBitcoin API using out [ElectrumX](https://github.com/MicroBitcoinOrg/ElectrumX/) repository :D !
