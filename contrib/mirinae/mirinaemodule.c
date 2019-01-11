@@ -13,7 +13,7 @@ void MirinaeHash(const char* input, char* output, size_t length, int height)
     unsigned char hash[64] = { 0 };
     unsigned char offset[64] = { 0 };
     unsigned char seed[32] = { 0 };
-    const int window = 256;
+    const int window = 64;
     const int aperture = 32;
     int64_t n = 0;
 
