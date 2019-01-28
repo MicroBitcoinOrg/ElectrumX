@@ -17,6 +17,7 @@ node_name = NAME
 port = int(environ.get('RPC_PORT', 7403))
 rpc_port = int(environ.get('RPC_PORT', 8000))
 allowed = [
+    'blockchain.address.listunspent',
     'blockchain.address.balance',
     'blockchain.address.history',
     'blockchain.address.mempool',
@@ -35,7 +36,7 @@ allowed = [
     'server.status'
 ]
 
-def dead_response(code = -32600, message = "Invalid Request", rid = node_name):
+def dead_response(code=-32600, message="Invalid Request", rid=node_name):
     return {"jsonrpc": "2.0", "error": {"code": code, "message": message}, "id": rid}
 
 def handle_rpc(raw_data):
@@ -83,7 +84,7 @@ def handle_rpc(raw_data):
             if type(rid) is str or type(rid) is int:
                 result["id"] = rid
 
-        if error == True:
+        if error is True:
             result["error"] = {
                 "code": error_code,
                 "message": error_message
@@ -121,7 +122,7 @@ def create_rpc(result_data, rpc_id):
             error_message = "Invalid Request: {}".format(result_data)
             error_code = -32600
 
-        if error == True:
+        if error is True:
             result["error"] = {
                 "code": error_code,
                 "message": error_message
