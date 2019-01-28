@@ -448,6 +448,7 @@ class ElectrumX(SessionBase):
             'blockchain.address.get_utxo': controller.address_listunspent_script,
             'blockchain.address.get_utxo_amount': controller.address_listunspent_amount,
             'blockchain.address.utxo': controller.address_listunspent_amount,
+            'blockchain.address.allutxo': controller.address_listunspent_full,
             'blockchain.address.subscribe': self.address_subscribe,
             'blockchain.address.history': controller.address_history_pagination,
             'blockchain.address.balance': controller.address_get_balance,

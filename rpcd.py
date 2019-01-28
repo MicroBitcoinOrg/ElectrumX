@@ -17,7 +17,7 @@ node_name = NAME
 port = int(environ.get('RPC_PORT', 7403))
 rpc_port = int(environ.get('RPC_PORT', 8000))
 allowed = [
-    'blockchain.address.listunspent',
+    'blockchain.address.allutxo',
     'blockchain.address.balance',
     'blockchain.address.history',
     'blockchain.address.mempool',

@@ -942,7 +942,25 @@ class Controller(ServerBase):
 
         return utxos_result
 
-    async def address_listunspent_amount(self, address, amount = 1):
+    async def address_listunspent_full(self, address):
+        hashX = self.address_to_hashX(address)
+        utxos = await self.hashX_listunspent(hashX)
+        utxos_result = []
+
+        current_amount = 0
+        for tx in utxos:
+            if tx["height"] != 0:
+                try:
+                    tx_data = await self.transaction_get(tx["tx_hash"], True)
+                    tx["script"] = tx_data["vout"][tx["tx_pos"]]["scriptPubKey"]["hex"]
+                except Exception as e:
+                    break
+
+                utxos_result.append(tx)
+
+        return utxos_result
+
+    async def address_listunspent_amount(self, address, amount=1):
         hashX = self.address_to_hashX(address)
         balance = await self.get_balance(hashX)
         utxos = await self.hashX_listunspent(hashX)
