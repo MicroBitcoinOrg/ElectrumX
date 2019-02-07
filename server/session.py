@@ -112,7 +112,7 @@ class SessionBase(ServerSession):
             msg += ' whilst paused'
         if self.concurrency.max_concurrent != self.max_concurrent:
             msg += ' whilst throttled'
-        if self.send_size >= 1024*1024:
+        if self.send_size >= 1024 * 1024:
             msg += ('.  Sent {:,d} bytes in {:,d} messages'
                     .format(self.send_size, self.send_count))
         if msg:
@@ -446,9 +446,10 @@ class ElectrumX(SessionBase):
             'blockchain.address.mempool': controller.address_get_mempool,
             'blockchain.address.listunspent': controller.address_listunspent,
             'blockchain.address.get_utxo': controller.address_listunspent_script,
-            'blockchain.address.get_utxo_amount': controller.address_listunspent_amount,
-            'blockchain.address.utxo': controller.address_listunspent_amount,
-            'blockchain.address.allutxo': controller.address_listunspent_full,
+            'blockchain.address.get_utxo_amount': controller.address_amount_unspent,
+            'blockchain.address.utxo': controller.address_amount_unspent,
+            'blockchain.address.pgutxo': controller.address_amount_unspent_pagination,
+            'blockchain.address.allutxo': controller.address_allunspent,
             'blockchain.address.subscribe': self.address_subscribe,
             'blockchain.address.history': controller.address_history_pagination,
             'blockchain.address.balance': controller.address_get_balance,

@@ -833,7 +833,7 @@ class Controller(ServerBase):
         hashX = self.address_to_hashX(address)
         return await self.confirmed_and_unconfirmed_history(hashX)
 
-    async def address_info(self, address, history_start = 0, history_offset = 20):
+    async def address_info(self, address, history_start=0, history_offset=20):
         result = {}
         address_tx = []
         result["balance"] = await self.address_get_balance(address)
@@ -846,7 +846,7 @@ class Controller(ServerBase):
 
         return result
 
-    async def address_history_pagination(self, address, history_start = 0, history_offset = 20):
+    async def address_history_pagination(self, address, history_start=0, history_offset=20):
         history = await self.address_get_history(address)
         history.reverse()
 
@@ -918,7 +918,7 @@ class Controller(ServerBase):
         hashX = self.address_to_hashX(address)
         return await self.hashX_listunspent(hashX)
 
-    async def address_listunspent_script(self, address, tx_start = 0, tx_offset = 20):
+    async def address_listunspent_script(self, address, tx_start=0, tx_offset=20):
         hashX = self.address_to_hashX(address)
         utxos = await self.hashX_listunspent(hashX)
         utxos_result = []
@@ -942,7 +942,7 @@ class Controller(ServerBase):
 
         return utxos_result
 
-    async def address_listunspent_full(self, address):
+    async def address_allunspent(self, address):
         hashX = self.address_to_hashX(address)
         utxos = await self.hashX_listunspent(hashX)
         utxos_result = []
@@ -960,7 +960,8 @@ class Controller(ServerBase):
 
         return utxos_result
 
-    async def address_listunspent_amount(self, address, amount=1):
+    async def address_amount_unspent(self, address, amount=1):
+        '''Return the list of UTXOs for amount.'''
         hashX = self.address_to_hashX(address)
         balance = await self.get_balance(hashX)
         utxos = await self.hashX_listunspent(hashX)
@@ -985,6 +986,56 @@ class Controller(ServerBase):
             return "Not enough funds"
 
         return utxos_result
+
+    async def address_amount_unspent_pagination(self, address, amount=1, utxo_start=0, utxo_offset=20):
+        '''Return the list of UTXOs for amount with pagination.'''
+        hashX = self.address_to_hashX(address)
+        balance = await self.get_balance(hashX)
+        utxos = await self.hashX_listunspent(hashX)
+
+        result = {}
+        utxos_amount = []
+        result["utxo"] = []
+
+        if int(utxo_offset) > 100:
+            utxo_offset = 100
+
+        if balance["confirmed"] >= int(amount):
+            current_amount = 0
+            for tx in utxos:
+                if tx["height"] != 0:
+                    try:
+                        tx_data = await self.transaction_get(tx["tx_hash"], True)
+                        tx["script"] = tx_data["vout"][tx["tx_pos"]]["scriptPubKey"]["hex"]
+                    except Exception as e:
+                        break
+
+                    utxos_amount.append(tx)
+                    current_amount += tx["value"]
+                    if current_amount > int(amount):
+                        break
+
+        else:
+            return "Not enough funds"
+
+        utxo_data = []
+        result["total"] = len(utxos_amount)
+
+        for utxo_index in range(int(utxo_start), int(utxo_start) + int(utxo_offset)):
+            try:
+                utxo_info = utxos_amount[utxo_index]
+            except Exception as e:
+                break
+
+            utxo = {}
+            utxo["index"] = utxo_index
+            utxo["data"] = utxo_info
+
+            utxo_data.append(utxo)
+
+        result["utxo"] = utxo_data
+
+        return result
 
     async def scripthash_listunspent(self, scripthash):
         '''Return the list of UTXOs of a scripthash.'''

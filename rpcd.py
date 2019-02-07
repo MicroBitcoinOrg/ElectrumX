@@ -22,6 +22,7 @@ allowed = [
     'blockchain.address.history',
     'blockchain.address.mempool',
     'blockchain.address.utxo',
+    'blockchain.address.pgutxo',
     'blockchain.address.info',
     'blockchain.block.info',
     'blockchain.block.range',
@@ -149,7 +150,7 @@ class RpcServer(BaseHTTPRequestHandler):
             
         async with ClientSession('localhost', client_port) as session:
             try:
-                response = await session.send_request(method, params, timeout=15)
+                response = await session.send_request(method, params, timeout=60)
             except Exception as e:
                 response = e
 
