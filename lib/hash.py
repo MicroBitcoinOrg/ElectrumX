@@ -30,7 +30,7 @@
 import hashlib
 import hmac
 import groestlcoin_hash
-import mirinae
+import rainforest
 
 from lib.util import bytes_to_int, int_to_bytes, hex_to_bytes
 
@@ -51,9 +51,9 @@ def groestl_hash(x):
     return groestlcoin_hash.getHash(x, len(x))
 
 
-def mirinae_hash(x, height):
+def rainforest_hash(x):
     '''Simple wrapper of mirinae hash.'''
-    return mirinae.get_hash(x, len(x), height)
+    return rainforest.get_hash(x, len(x))
 
 
 def ripemd160(x):

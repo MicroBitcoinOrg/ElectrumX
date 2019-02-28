@@ -35,17 +35,14 @@ import re
 import struct
 from decimal import Decimal
 from hashlib import sha256
-from functools import partial
-import base64
-import math
 
 import lib.util as util
-from lib.hash import Base58, hash160, double_sha256, hash_to_str, groestl_hash, mirinae_hash, HASHX_LEN
+from lib.hash import Base58, hash160, double_sha256, hash_to_str, groestl_hash, rainforest_hash, HASHX_LEN
 from lib.script import ScriptPubKey, OpCodes
 import lib.tx as lib_tx
 from server.block_processor import BlockProcessor
 import server.daemon as daemon
-from server.session import ElectrumX, DashElectrumX
+from server.session import ElectrumX
 
 
 Block = namedtuple("Block", "raw header transactions")
@@ -311,7 +308,7 @@ class MicroBitcoin(Coin):
     NET = "mainnet"
     VALUE_PER_COIN = 10000
     MBC_HEIGHT = 525000
-    MIRINAE_HEIGHT = 999999999
+    RAINFOREST_HEIGHT = 830000
     P2PKH_VERBYTE = bytes.fromhex("1A")
     P2SH_VERBYTES = [bytes.fromhex("33")]
     GENESIS_HASH = ("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f")
@@ -340,9 +337,9 @@ class MicroBitcoin(Coin):
 
     @classmethod
     def header_hash(cls, header, height=0):
-        if height > cls.MBC_HEIGHT and height < cls.MIRINAE_HEIGHT:
+        if height > cls.MBC_HEIGHT and height < cls.RAINFOREST_HEIGHT:
             return groestl_hash(header)
-        elif height >= cls.MIRINAE_HEIGHT:
-            return mirinae_hash(header, height)
+        elif height >= cls.RAINFOREST_HEIGHT:
+            return rainforest_hash(header)
         else:
             return double_sha256(header)
