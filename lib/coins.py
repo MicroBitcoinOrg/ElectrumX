@@ -343,3 +343,12 @@ class MicroBitcoin(Coin):
             return rainforest_hash(header)
         else:
             return double_sha256(header)
+
+class MicroBitcoinTestnet(MicroBitcoin):
+    SHORTNAME = "TMBC"
+    NET = "testnet"
+    MBC_HEIGHT = 5
+    RAINFOREST_HEIGHT = 20
+    P2PKH_VERBYTE = bytes.fromhex("47")
+    P2SH_VERBYTES = [bytes.fromhex("49")]
+    RPC_PORT = 16402
