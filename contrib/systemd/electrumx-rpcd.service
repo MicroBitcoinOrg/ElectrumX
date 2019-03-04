@@ -4,6 +4,7 @@ Description=ElectrumX Rpc Http Server
 [Service]
 Type=simple
 ExecStart=/usr/bin/python3 /path/to/electrumx/rpcd.py
+User=electrumx
 
 [Install]
 WantedBy=multi-user.target

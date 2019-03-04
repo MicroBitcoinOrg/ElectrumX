@@ -1231,7 +1231,7 @@ class Controller(ServerBase):
         supply = 0
         halvings = 209999
         halvings_count = 0
-        hardfork_height = self.coin.FORK_HEIGHT
+        hardfork_height = self.coin.MBC_HEIGHT
         premine_amount = 1050000 * self.coin.VALUE_PER_COIN
         
         while calc_height > halvings:
