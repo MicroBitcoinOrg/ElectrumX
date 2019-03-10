@@ -719,7 +719,7 @@ class Controller(ServerBase):
         block = await self.daemon_request('deserialised_block', block_hash)
         return len(block['tx'])
 
-    async def block_info(self, block_hash, tx_start = 0, tx_offset = 20):
+    async def block_info(self, block_hash, tx_start=0, tx_offset=20):
         block_tx = []
         result = {}
         block = await self.daemon_request('deserialised_block', block_hash)
@@ -1056,6 +1056,7 @@ class Controller(ServerBase):
         height = self.non_negative_integer(height)
         header = self.electrum_header(height)
         block = await self.daemon_request('deserialised_block', header["block_hash"])
+        header['nethash'] = await self.daemon_request('getnetworkhashps', height)
         header['difficulty'] = block['difficulty']
         
         return header
@@ -1077,6 +1078,7 @@ class Controller(ServerBase):
                 header['tx_count'] = len(block['tx'])
                 header['difficulty'] = block['difficulty']
                 header['size'] = block['size']
+                header['nethash'] = await self.daemon_request('getnetworkhashps', height)
 
                 headers_list.append(header)
             except Exception as e:
@@ -1093,7 +1095,7 @@ class Controller(ServerBase):
         number = self.non_negative_integer(number)
         return await self.daemon_request('estimatefee', [number])
 
-    async def estimatesmartfee(self, number = 6):
+    async def estimatesmartfee(self, number=6):
         number = self.non_negative_integer(number)
         data = await self.daemon_request('estimatesmartfee', [number])
 
@@ -1147,7 +1149,7 @@ class Controller(ServerBase):
 
         return vin_data
 
-    async def transaction_get_verbose(self, tx_hash, vin_start = 0, vin_offset = 20, vin_load = 1):
+    async def transaction_get_verbose(self, tx_hash, vin_start=0, vin_offset=20, vin_load=1):
         self.assert_tx_hash(tx_hash)
         tx_data = await self.daemon_request('getrawtransaction', tx_hash, True)
         tx_data["amount"] = 0
@@ -1208,11 +1210,25 @@ class Controller(ServerBase):
     async def getchaininfo(self):
         data = await self.daemon_request('getblockchaininfo')
         result = {
-            "height": data["headers"],
-            "db_height": self.bp.db_height,
-            "difficulty": data["difficulty"],
-            "bestblockhash": data["bestblockhash"],
-            "chain": data["chain"]
+            'height': data['headers'],
+            'db_height': self.bp.db_height,
+            'difficulty': data['difficulty'],
+            'bestblockhash': data['bestblockhash'],
+            'chain': data['chain'],
+            'nethash': await self.daemon_request('getnetworkhashps', data['headers'])
+        }
+
+        return result
+
+    async def gethethash(self):
+        data = await self.daemon_request('getblockchaininfo')
+        result = {
+            'height': data['headers'],
+            'db_height': self.bp.db_height,
+            'difficulty': data['difficulty'],
+            'bestblockhash': data['bestblockhash'],
+            'chain': data['chain'],
+            'nethash': await self.daemon_request('getnetworkhashps', data['headers'])
         }
 
         return result
@@ -1222,7 +1238,7 @@ class Controller(ServerBase):
         raw_header = self.raw_header(height)
         return {'hex': raw_header.hex(), 'height': height}
 
-    def supply(self, height = 0):
+    def supply(self, height=0):
         # TODO: Make this stuff not hardcoded
         height = self.non_negative_integer(height)
         op_height = self.bp.db_height if int(height) == 0 else int(height)
