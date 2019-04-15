@@ -30,7 +30,7 @@
 import hashlib
 import hmac
 import groestlcoin_hash
-import rainforest
+import rainforest_hash
 
 from lib.util import bytes_to_int, int_to_bytes, hex_to_bytes
 
@@ -51,9 +51,14 @@ def groestl_hash(x):
     return groestlcoin_hash.getHash(x, len(x))
 
 
-def rainforest_hash(x):
-    '''Simple wrapper of mirinae hash.'''
-    return rainforest.get_hash(x, len(x))
+def rainforest_hash_v1(x):
+    '''Simple wrapper of rainforest v1 hash.'''
+    return rainforest_hash.get(x, len(x))
+
+
+def rainforest_hash_v2(x):
+    '''Simple wrapper of rainforest v2 hash.'''
+    return rainforest_hash.get_v2(x, len(x))
 
 
 def ripemd160(x):
