@@ -46,6 +46,13 @@ def sha256(x):
     return _sha256(x).digest()
 
 
+def blake2b_hash(x):
+    '''Simple wrapper of hashlib blake2b.'''
+    h = hashlib.blake2b(digest_size=32)
+    h.update(x)
+    return h.digest()
+
+
 def groestl_hash(x):
     '''Simple wrapper of groestl hash.'''
     return groestlcoin_hash.getHash(x, len(x))

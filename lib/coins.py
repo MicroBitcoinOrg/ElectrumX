@@ -37,7 +37,7 @@ from decimal import Decimal
 from hashlib import sha256
 
 import lib.util as util
-from lib.hash import Base58, hash160, double_sha256, hash_to_str, groestl_hash, rainforest_hash_v1, rainforest_hash_v2, HASHX_LEN
+from lib.hash import Base58, hash160, double_sha256, hash_to_str, groestl_hash, rainforest_hash_v1, blake2b_hash, HASHX_LEN
 from lib.script import ScriptPubKey, OpCodes
 import lib.tx as lib_tx
 from server.block_processor import BlockProcessor
@@ -339,10 +339,10 @@ class MicroBitcoin(Coin):
     def header_hash(cls, header, height=0):
         if height > cls.MBC_HEIGHT and height < cls.RAINFOREST_HEIGHT_V1:
             return groestl_hash(header)
-        elif height >= cls.RAINFOREST_HEIGHT_V1 and height < cls.RAINFOREST_HEIGHT_V2:
+        elif height >= cls.RAINFOREST_HEIGHT_V1 and height < cls.BLAKE_INDEXING:
             return rainforest_hash_v1(header)
-        elif height >= cls.RAINFOREST_HEIGHT_V2:
-            return rainforest_hash_v2(header)
+        elif height >= cls.BLAKE_INDEXING:
+            return blake2b_hash(header)
         else:
             return double_sha256(header)
 
@@ -351,7 +351,7 @@ class MicroBitcoinTestnet(MicroBitcoin):
     NET = "testnet"
     MBC_HEIGHT = 5
     RAINFOREST_HEIGHT_V1 = 20
-    RAINFOREST_HEIGHT_V2 = 30
+    BLAKE_INDEXING = 30
     P2PKH_VERBYTE = bytes.fromhex("47")
     P2SH_VERBYTES = [bytes.fromhex("49")]
     RPC_PORT = 16402
