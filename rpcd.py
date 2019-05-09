@@ -4,19 +4,19 @@ Usage::
     ./rpcd.py [<port>]
 """
 from aiorpcx import ClientSession
-from server.controller import Controller
-from http.server import BaseHTTPRequestHandler, HTTPServer
-from server.version import NAME
 from urllib import parse
 from os import environ
-import asyncio
+from sanic import Sanic
+from sanic.views import HTTPMethodView
+from sanic.response import json as sanic_json
 import json
 import re
 
-node_name = NAME
-port = int(environ.get('RPC_PORT', 7403))
-rpc_port = int(environ.get('RPC_PORT', 8000))
-allowed = [
+
+API_ID = 'ElectrumX API'
+RPC_PORT = int(environ.get('RPC_PORT', 7403))
+SERVER_PORT = 4321
+ALLOWED = [
     'blockchain.address.allutxo',
     'blockchain.address.balance',
     'blockchain.address.history',
@@ -37,32 +37,27 @@ allowed = [
     'server.status'
 ]
 
-def dead_response(code=-32600, message="Invalid Request", rid=node_name):
+
+def dead_response(code=-32600, message="Invalid Request", rid=API_ID):
     return {"jsonrpc": "2.0", "error": {"code": code, "message": message}, "id": rid}
 
-def handle_rpc(raw_data):
+
+def handle_rpc(data, ispost=False):
     result = {
         "jsonrpc": "2.0",
         "params": [],
-        "id": node_name
+        "id": API_ID
     }
 
     error = False
     blank = False
     error_message = ""
     error_code = 0
-    isjson = False
     method = ""
     rid = ""
 
     try:
-        try:
-            data = json.loads(raw_data)
-            isjson = True
-        except Exception as e:
-            data = parse.parse_qs(raw_data)
-
-        if isjson and data["jsonrpc"] != "2.0":
+        if ispost and data["jsonrpc"] != "2.0":
             error = True
             error_message = "Invalid Request"
             error_code = -32600
@@ -70,8 +65,8 @@ def handle_rpc(raw_data):
         if "method" not in data:
             blank = True
         else:
-            method = data["method"] if isjson else data["method"][0]
-            if method not in allowed:
+            method = data["method"] if ispost else data["method"][0]
+            if method not in ALLOWED:
                 error = True
                 error_message = "Invalid Request"
                 error_code = -32601
@@ -80,8 +75,11 @@ def handle_rpc(raw_data):
             data["params"] = data["params[]"]
             data.pop("params[]", None)
 
+        if "params" not in data:
+            data["params"] = []
+
         if "id" in data:
-            rid = data["id"] if isjson else data["id"][0]
+            rid = data["id"] if ispost else data["id"][0]
             if type(rid) is str or type(rid) is int:
                 result["id"] = rid
 
@@ -98,7 +96,7 @@ def handle_rpc(raw_data):
                 if "params" in data:
                     result["params"] = data["params"]
 
-    except ValueError:
+    except:
         result = dead_response(-32700, "Parse error")
 
     return result
@@ -136,56 +134,67 @@ def create_rpc(result_data, rpc_id):
     return result
 
 
-class RpcServer(BaseHTTPRequestHandler):
-    def _set_response(self):
-        self.send_response(200)
-        self.send_header('Content-type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.end_headers()
-
+class RpcServer(HTTPMethodView):
     async def send_request(self, request_self, method, params, rid):
-        client_port = port
-        if method in ["getinfo"]:
-            client_port = rpc_port
-            
-        async with ClientSession('localhost', client_port) as session:
+        async with ClientSession('localhost', RPC_PORT) as session:
             try:
                 response = await session.send_request(method, params, timeout=60)
             except Exception as e:
                 response = e
 
-        request_self._set_response()
-        request_self.wfile.write(json.dumps(create_rpc(response, rid)).encode('utf-8'))
+        return create_rpc(response, rid)
 
-    def do_GET(self):
-        data = handle_rpc(parse.urlparse(self.path).query)
-        loop = asyncio.get_event_loop()
+
+    async def get(self, request):
+        data = handle_rpc(parse.parse_qs(request.query_string))
+        headers = {'Access-Control-Allow-Origin': '*'}
 
         if "error" not in data:
-            loop = asyncio.get_event_loop()
-            
             try:
-                loop.run_until_complete(self.send_request(self, data["method"], data["params"], data["id"]))
+                result = await self.send_request(self, data["method"], data["params"], data["id"])
+                return sanic_json(result, headers=headers)
             except OSError:
                 print('cannot connect - is ElectrumX catching up, not running, or '
-                      f'is {port} the wrong RPC port?')
+                      f'is {RPC_PORT} the wrong RPC port?')
             except Exception as e:
                 print(f'error making request: {e}')
 
         else:
-            self._set_response()
-            self.wfile.write(json.dumps(dead_response(), indent=4, sort_keys=True).encode('utf-8'))
-        
-    def do_POST(self):
-        content_length = int(self.headers['Content-Length'])
-        post_data = self.rfile.read(content_length)
-        data = handle_rpc(post_data.decode('utf-8'))
+            return sanic_json(dead_response(), headers=headers)
+
+
+    async def post(self, request):
+        data = handle_rpc(request.json, True)
+        headers = {'Access-Control-Allow-Origin': '*'}
 
         if "error" not in data:
-            loop = asyncio.get_event_loop()
-            
             try:
-                loop.run_until_complete(self.send_request(self, data["method"], data["params"], data["id"]))
+                result = await self.send_request(self, data["method"], data["params"], data["id"])
+                return sanic_json(result, headers=headers)
+            except OSError:
+                print('cannot connect - is ElectrumX catching up, not running, or '
+                      f'is {RPC_PORT} the wrong RPC port?')
+            except Exception as e:
+                print(f'error making request: {e}')
+
+        else:
+            return sanic_json(dead_response(), headers=headers)
+
+
+def run(server_port=SERVER_PORT):
+    app = Sanic()
+    app.add_route(RpcServer.as_view(), '/')
+    app.run(host='0.0.0.0', port=server_port)
+
+
+if __name__ == '__main__':
+    from sys import argv
+
+    if len(argv) == 2:
+        run(int(argv[1]))
+    else:
+        run()
+complete(self.send_request(self, data["method"], data["params"], data["id"]))
             except OSError:
                 print('cannot connect - is ElectrumX catching up, not running, or '
                       f'is {port} the wrong RPC port?')
