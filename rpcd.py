@@ -9,12 +9,13 @@ from os import environ
 from sanic import Sanic
 from sanic.views import HTTPMethodView
 from sanic.response import json as sanic_json
+from sanic_cors import CORS, cross_origin
 import json
 import re
 
 
 API_ID = 'ElectrumX API'
-RPC_PORT = int(environ.get('RPC_PORT', 7403))
+RPC_PORT = 7403
 SERVER_PORT = 4321
 ALLOWED = [
     'blockchain.address.allutxo',
@@ -36,6 +37,14 @@ ALLOWED = [
     'blockchain.info',
     'server.status'
 ]
+
+
+def is_json(myjson):
+    try:
+        json_object = json.loads(myjson)
+    except ValueError:
+        return False
+    return True
 
 
 def dead_response(code=-32600, message="Invalid Request", rid=API_ID):
@@ -147,12 +156,11 @@ class RpcServer(HTTPMethodView):
 
     async def get(self, request):
         data = handle_rpc(parse.parse_qs(request.query_string))
-        headers = {'Access-Control-Allow-Origin': '*'}
 
         if "error" not in data:
             try:
                 result = await self.send_request(self, data["method"], data["params"], data["id"])
-                return sanic_json(result, headers=headers)
+                return sanic_json(result)
             except OSError:
                 print('cannot connect - is ElectrumX catching up, not running, or '
                       f'is {RPC_PORT} the wrong RPC port?')
@@ -160,17 +168,19 @@ class RpcServer(HTTPMethodView):
                 print(f'error making request: {e}')
 
         else:
-            return sanic_json(dead_response(), headers=headers)
+            return sanic_json(dead_response())
 
 
     async def post(self, request):
-        data = handle_rpc(request.json, True)
-        headers = {'Access-Control-Allow-Origin': '*'}
+        if is_json(request.body):
+            data = handle_rpc(request.json, True)
+        else:
+            data = handle_rpc(request.form)
 
         if "error" not in data:
             try:
                 result = await self.send_request(self, data["method"], data["params"], data["id"])
-                return sanic_json(result, headers=headers)
+                return sanic_json(result)
             except OSError:
                 print('cannot connect - is ElectrumX catching up, not running, or '
                       f'is {RPC_PORT} the wrong RPC port?')
@@ -178,11 +188,13 @@ class RpcServer(HTTPMethodView):
                 print(f'error making request: {e}')
 
         else:
-            return sanic_json(dead_response(), headers=headers)
+            return sanic_json(dead_response())
 
 
 def run(server_port=SERVER_PORT):
     app = Sanic()
+    CORS(app)
+
     app.add_route(RpcServer.as_view(), '/')
     app.run(host='0.0.0.0', port=server_port)
 
@@ -192,38 +204,5 @@ if __name__ == '__main__':
 
     if len(argv) == 2:
         run(int(argv[1]))
-    else:
-        run()
-complete(self.send_request(self, data["method"], data["params"], data["id"]))
-            except OSError:
-                print('cannot connect - is ElectrumX catching up, not running, or '
-                      f'is {port} the wrong RPC port?')
-            except Exception as e:
-                print(f'error making request: {e}')
-
-        else:
-            self._set_response()
-            self.wfile.write(json.dumps(dead_response(), indent=4, sort_keys=True).encode('utf-8'))
-
-
-def run(server_class=HTTPServer, handler_class=RpcServer, port=4321):
-    server_address = ('', port)
-    rpcd = server_class(server_address, handler_class)
-    print('Starting rpcd on port {}...\n'.format(port))
-
-    try:
-        rpcd.serve_forever()
-    except KeyboardInterrupt:
-        pass
-
-    rpcd.server_close()
-    print('Stopping rpcd...\n')
-
-
-if __name__ == '__main__':
-    from sys import argv
-
-    if len(argv) == 2:
-        run(port=int(argv[1]))
     else:
         run()
