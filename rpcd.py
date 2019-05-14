@@ -120,11 +120,16 @@ def create_rpc(result_data, rpc_id):
     error = False
     error_message = ""
     error_code = 0
+    length = 0
 
     try:
-        if type(result_data) == list or type(result_data) == dict or len(re.findall(r'^[a-fA-F0-9]+$', result_data)) > 0:
-            data = result_data
+        length = len(re.findall(r'^[a-fA-F0-9]+$', result_data))
+    except Exception as e:
+        pass
 
+    try:
+        if type(result_data) == list or type(result_data) == dict or length > 0:
+            data = result_data
         else:
             error = True
             error_message = "Invalid Request: {}".format(result_data)
@@ -137,6 +142,7 @@ def create_rpc(result_data, rpc_id):
             }
         else:
             result["result"] = data
+
     except Exception as e:
         result = dead_response(-32700, "Parse error")
 
