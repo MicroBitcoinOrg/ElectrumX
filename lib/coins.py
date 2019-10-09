@@ -307,17 +307,14 @@ class MicroBitcoin(Coin):
     SHORTNAME = "MBC"
     NET = "mainnet"
     VALUE_PER_COIN = 10000
-    MBC_HEIGHT = 525000
-    RAINFOREST_HEIGHT_V1 = 830000
-    BLAKE_INDEXING = 915000
     P2PKH_VERBYTE = bytes.fromhex("1A")
     P2SH_VERBYTES = [bytes.fromhex("33")]
-    GENESIS_HASH = ("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f")
+    GENESIS_HASH = ("14c03ecf20edc9887fb98bf34b53809f063fc491e73f588961f764fac88ecbae")
     DESERIALIZER = lib_tx.DeserializerSegWit
-    TX_COUNT = 265026255
-    TX_COUNT_HEIGHT = 499923
-    TX_PER_BLOCK = 50
-    RPC_PORT = 6402
+    TX_COUNT = 1
+    TX_COUNT_HEIGHT = 1
+    TX_PER_BLOCK = 1
+    RPC_PORT = 6501
 
     @classmethod
     def electrum_header(cls, header, height):
@@ -338,21 +335,11 @@ class MicroBitcoin(Coin):
 
     @classmethod
     def header_hash(cls, header, height=0):
-        if height > cls.MBC_HEIGHT and height < cls.RAINFOREST_HEIGHT_V1:
-            return groestl_hash(header)
-        elif height >= cls.RAINFOREST_HEIGHT_V1 and height < cls.BLAKE_INDEXING:
-            return rainforest_hash_v1(header)
-        elif height >= cls.BLAKE_INDEXING:
-            return blake2b_hash(header)
-        else:
-            return double_sha256(header)
+        return blake2b_hash(header)
 
 class MicroBitcoinTestnet(MicroBitcoin):
     SHORTNAME = "TMBC"
     NET = "testnet"
-    MBC_HEIGHT = 5
-    RAINFOREST_HEIGHT_V1 = 20
-    BLAKE_INDEXING = 30
     P2PKH_VERBYTE = bytes.fromhex("47")
     P2SH_VERBYTES = [bytes.fromhex("49")]
-    RPC_PORT = 16402
+    RPC_PORT = 16501
